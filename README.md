@@ -1,58 +1,234 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Product CSV Importer
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Task completed by **Pavel Zayats**  
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-Pavel%20Zayats-0A66C2?logo=linkedin&logoColor=white)](https://www.linkedin.com/in/pavel-zayats-5051/)
 
-## About Laravel
+Laravel command-line importer for supplier product data. It reads a CSV file, validates rows, applies business rules, imports valid products into the legacy `tblProductData` table, and prints a clear import report.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## Main Structure
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+```text
+app
+|-- Console
+|   `-- Commands
+|       `-- ImportProductsCommand.php
+|-- DTO
+|   `-- ProductImportRow.php
+|-- Repositories
+|   `-- ProductRepository.php
+|-- Rules
+|   |-- DiscontinuedRule.php
+|   |-- MaximumPriceRule.php
+|   `-- MinimumStockPriceRule.php
+`-- Services
+    |-- CsvReader.php
+    |-- ProductImporter.php
+    `-- ProductImportReport.php
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+database
+`-- migrations
+    `-- 2026_06_09_194832_add_stock_and_price_columns_to_import_test_table.php
 
-## Learning Laravel
-
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
-
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
-
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
-
-## Agentic Development
-
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
-
-```bash
-composer require laravel/boost --dev
-
-php artisan boost:install
+storage
+`-- app
+    `-- private
+        `-- stock.csv
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+| Area | Files | Responsibility |
+| --- | --- | --- |
+| Console | [ImportProductsCommand.php](app/Console/Commands/ImportProductsCommand.php) | Artisan entry point. Resolves the CSV path, runs test mode, and prints the report. |
+| Services | [CsvReader.php](app/Services/CsvReader.php), [ProductImporter.php](app/Services/ProductImporter.php), [ProductImportReport.php](app/Services/ProductImportReport.php) | Reads CSV rows, coordinates the import flow, and builds the final report. |
+| Rules | [MinimumStockPriceRule.php](app/Rules/MinimumStockPriceRule.php), [MaximumPriceRule.php](app/Rules/MaximumPriceRule.php), [DiscontinuedRule.php](app/Rules/DiscontinuedRule.php) | Encapsulates import business rules. |
+| DTO | [ProductImportRow.php](app/DTO/ProductImportRow.php) | Immutable parsed CSV row with field-level validation errors. |
+| Repository | [ProductRepository.php](app/Repositories/ProductRepository.php) | Handles database inserts and duplicate product-code checks. |
+| Migration | [add_stock_and_price_columns_to_import_test_table.php](database/migrations/2026_06_09_194832_add_stock_and_price_columns_to_import_test_table.php) | Adds nullable `stock` and `price` columns to `tblProductData`. |
+| CSV | [stock.csv](storage/app/private/stock.csv) | Default supplier CSV file used by the import command. |
 
-## Contributing
+## Requirements
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+- PHP `8.4`
+- Composer
+- Node.js and npm
+- MySQL
+- Existing legacy database/table from the task SQL script:
 
-## Code of Conduct
+```sql
+CREATE DATABASE importTest;
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+USE importTest;
 
-## Security Vulnerabilities
+CREATE TABLE tblProductData (
+  intProductDataId int(10) unsigned NOT NULL AUTO_INCREMENT,
+  strProductName varchar(50) NOT NULL,
+  strProductDesc varchar(255) NOT NULL,
+  strProductCode varchar(10) NOT NULL,
+  dtmAdded datetime DEFAULT NULL,
+  dtmDiscontinued datetime DEFAULT NULL,
+  stmTimestamp timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (intProductDataId),
+  UNIQUE KEY (strProductCode)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1 COMMENT='Stores product data';
+```
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+## Installation
 
-## License
+1. Install PHP dependencies:
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+```bash
+composer install
+```
+
+2. Create the environment file:
+
+```bash
+cp .env.example .env
+```
+
+3. Generate the app key:
+
+```bash
+php artisan key:generate
+```
+
+4. Configure MySQL in `.env`:
+
+```dotenv
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=importTest
+DB_USERNAME=your_username
+DB_PASSWORD=your_password
+```
+
+5. Install frontend dependencies:
+
+```bash
+npm install
+```
+
+6. Build frontend assets:
+
+```bash
+npm run build
+```
+
+7. Run the migration that adds supplier stock and price columns:
+
+```bash
+php artisan migrate
+```
+
+## CSV File Location
+
+The default CSV file is expected here:
+
+```text
+storage/app/private/stock.csv
+```
+
+An example CSV file is included here: [storage/app/private/stock_example.csv](storage/app/private/stock_example.csv)
+
+Example using an absolute file path:
+
+```bash
+php artisan products:import /var/imports/supplier-products.csv
+```
+
+## Import Commands
+
+Run the import with the default CSV file:
+
+```bash
+php artisan products:import
+```
+
+Run in test mode without inserting rows:
+
+```bash
+php artisan products:import --test
+```
+
+Run with a custom CSV path:
+
+```bash
+php artisan products:import storage/app/private/stock.csv
+```
+
+Run with a custom CSV path in test mode:
+
+```bash
+php artisan products:import /absolute/path/to/products.csv --test
+```
+
+## Import Rules
+
+- Rows with invalid CSV structure or invalid required values are reported as failed.
+- Rows with duplicate product codes are skipped and shown in the report.
+- Products costing less than `5` with stock below `10` are skipped.
+- Products costing more than `1000` are skipped.
+- Discontinued products are imported with `dtmDiscontinued` set to the current date.
+- Test mode performs parsing, validation, rules, and duplicate checks, but does not insert rows.
+
+## Tests and Quality Checks
+
+Run the test suite:
+
+```bash
+php artisan test
+```
+
+Run tests through Composer:
+
+```bash
+composer test
+```
+
+Format PHP code:
+
+```bash
+vendor/bin/pint --format agent
+```
+
+Clear cached config before debugging environment issues:
+
+```bash
+php artisan config:clear
+```
+
+## Useful Development Commands
+
+Start the local Laravel development stack:
+
+```bash
+composer run dev
+```
+
+Serve only the Laravel app:
+
+```bash
+php artisan serve
+```
+
+List available Artisan commands:
+
+```bash
+php artisan list
+```
+
+Inspect the import command options:
+
+```bash
+php artisan products:import --help
+```
+
+## AI Usage While Development
+
+AI-assisted tools were used during development:
+
+- **ChatGPT**: used for initial plan creation and task breakdown.
+- **Codex**: used for the main coding work, including migrations, importer classes, command wiring, validation, and README updates.
+- **Cursor**: used for code refactoring and review support.
+
+The prompts used during development are documented in [prompts.md](prompts.md).
