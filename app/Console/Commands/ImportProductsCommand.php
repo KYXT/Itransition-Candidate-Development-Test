@@ -6,6 +6,7 @@ use App\Services\ProductImporter;
 use Illuminate\Console\Attributes\Description;
 use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
+use RuntimeException;
 
 #[Signature('products:import {path=storage/app/private/stock.csv : CSV file path} {--test : Run import without inserting rows}')]
 #[Description('Import supplier products from a CSV file')]
@@ -19,7 +20,14 @@ class ImportProductsCommand extends Command
         $path = $this->resolvePath((string) $this->argument('path'));
         $dryRun = (bool) $this->option('test');
 
-        $report = $importer->import($path, $dryRun);
+        try {
+            $report = $importer->import($path, $dryRun);
+        } catch (RuntimeException $exception) {
+            $this->line($exception->getMessage());
+
+            return self::FAILURE;
+        }
+
         $summary = $report->summary();
 
         if ($dryRun) {

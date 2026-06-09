@@ -24,11 +24,11 @@ class CsvReader
         }
 
         try {
-            fgetcsv($handle);
+            fgetcsv($handle, escape: '\\');
 
             $lineNumber = 1;
 
-            while (($record = fgetcsv($handle)) !== false) {
+            while (($record = fgetcsv($handle, escape: '\\')) !== false) {
                 $lineNumber++;
 
                 yield ProductImportRow::fromCsvRecord($record, $lineNumber);
