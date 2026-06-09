@@ -38,7 +38,7 @@ storage
 | Area | Files | Responsibility |
 | --- | --- | --- |
 | Console | [ImportProductsCommand.php](app/Console/Commands/ImportProductsCommand.php) | Artisan entry point. Resolves the CSV path, runs test mode, and prints the report. |
-| Services | [CsvReader.php](app/Services/CsvReader.php), [ProductImporter.php](app/Services/ProductImporter.php), [ProductImportReport.php](app/Services/ProductImportReport.php) | Reads CSV rows, coordinates the import flow, and builds the final report. |
+| Services | [CsvReader.php](app/Services/CsvReader.php), [ProductImporter.php](app/Services/ProductImporter.php), [ProductImportReport.php](app/Services/ProductImportReport.php) | Reads CSV rows with Simple Excel, coordinates the import flow, and builds the final report. |
 | Rules | [MinimumStockPriceRule.php](app/Rules/MinimumStockPriceRule.php), [MaximumPriceRule.php](app/Rules/MaximumPriceRule.php), [DiscontinuedRule.php](app/Rules/DiscontinuedRule.php) | Encapsulates import business rules. |
 | DTO | [ProductImportRow.php](app/DTO/ProductImportRow.php) | Immutable parsed CSV row with field-level validation errors. |
 | Repository | [ProductRepository.php](app/Repositories/ProductRepository.php) | Handles database inserts and duplicate product-code checks. |
@@ -170,6 +170,10 @@ php artisan products:import /absolute/path/to/products.csv --test
 - Products costing more than `1000` are skipped.
 - Discontinued products are imported with `dtmDiscontinued` set to the current date.
 - Test mode performs parsing, validation, rules, and duplicate checks, but does not insert rows.
+
+## Large CSV Support
+
+The importer is optimized for large CSV files. It uses [Spatie Simple Excel](https://github.com/spatie/simple-excel) to stream CSV rows lazily instead of loading the full file into memory, processes rows in chunks, checks duplicate product codes per chunk, and inserts valid products in database batches.
 
 ## Tests and Quality Checks
 

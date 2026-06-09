@@ -41,8 +41,13 @@ this is a test task I got to do. PDF file with
   is here - /home/pavel/Projects/Itransition-Candidate-Development-Test/storage/app/private/stock.csv. I installed laravel 13 and php 8.4 for it, and MySQL. I created migration file - database/migrations/2026_06_09_191615_create_products_table.php. Please fill it with columns without stock level and price, they need to be included in separate migration, per task description
 ```
 
+
+
 ```text
-I found SQL script for table creation: 
+I found SQL script for table creation.
+I created migration file (database/migrations/2026_06_09_194832_add_stock_and_price_columns_to_import_test_table.php) for adding two new columns. Please add those 2 columns described in lines "The supplier provides a stock level and price which we currently do not store. Using
+suitable data types, add two columns to the table to capture this information.". use unsignedInteger type for "stock" and decimal  for "price"
+
 
 -- Create database
 
@@ -65,36 +70,14 @@ CREATE TABLE tblProductData (
   PRIMARY KEY (intProductDataId),
   UNIQUE KEY (strProductCode)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1 COMMENT='Stores product data';
-. So we don't need to create custom migration. I removed it and created migration file for adding two new columns. Please add those 2 columns described in lines "The supplier provides a stock level and price which we currently do not store. Using
-suitable data types, add two columns to the table to capture this information.". use unsignedInteger type for "stock" and decimal  for "price"
+. 
+
 ```
 
 ```text
-I found SQL script for table creation: 
+ Let's use the library for csv read. Use guide from this https://laravel-news.com/how-to-process-large-csv-files-with-laravel. It describes this package https://github.com/spatie/simple-excel. Install it and
+  integrate, delete native php csv read
 
--- Create database
-
-CREATE DATABASE importTest;
-
--- and use...
-
-USE importTest;
-
--- Create table for data
-
-CREATE TABLE tblProductData (
-  intProductDataId int(10) unsigned NOT NULL AUTO_INCREMENT,
-  strProductName varchar(50) NOT NULL,
-  strProductDesc varchar(255) NOT NULL,
-  strProductCode varchar(10) NOT NULL,
-  dtmAdded datetime DEFAULT NULL,
-  dtmDiscontinued datetime DEFAULT NULL,
-  stmTimestamp timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  PRIMARY KEY (intProductDataId),
-  UNIQUE KEY (strProductCode)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1 COMMENT='Stores product data';
-. So we don't need to create custom migration. I removed it and created migration file (database/migrations/2026_06_09_194832_add_stock_and_price_columns_to_import_test_table.php) for adding two new columns. Please add those 2 columns described in lines "The supplier provides a stock level and price which we currently do not store. Using
-suitable data types, add two columns to the table to capture this information.". use unsignedInteger type for "stock" and decimal  for "price"
 ```
 
 ```text
@@ -211,4 +194,6 @@ Add "AI usage while development" section on the bottom. Describe that I used cha
 
 ## Cursor Prompts
 
-Not added yet.
+```text
+I did a test task and created a Pull request https://github.com/KYXT/Itransition-Candidate-Development-Test/pull/1  Task description here /home/pavel/Downloads/php-task/php-task.pdf. Please do a code review of PR
+```

@@ -163,9 +163,20 @@ class FakeProductRepository extends ProductRepository
         private readonly array $failingCodes = [],
     ) {}
 
-    public function existsByCode(string $productCode): bool
+    public function existingCodes(array $productCodes): array
     {
-        return in_array($productCode, $this->existingCodes, true);
+        return array_values(array_intersect($productCodes, $this->existingCodes));
+    }
+
+    public function insertMany(array $rows): void
+    {
+        foreach ($rows as $row) {
+            if (in_array($row->productCode, $this->failingCodes, true)) {
+                throw new RuntimeException("Insert failed for {$row->productCode}.");
+            }
+        }
+
+        array_push($this->insertedRows, ...$rows);
     }
 
     public function insert(ProductImportRow $row): void
